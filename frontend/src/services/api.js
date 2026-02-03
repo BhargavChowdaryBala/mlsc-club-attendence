@@ -14,6 +14,13 @@ export const markAttendance = async (rollNo) => {
         const response = await axios.post(`${API_URL}/api/mark-attendance`, { rollNo });
         return response.data;
     } catch (error) {
+        console.error("API Error Details:", {
+            message: error.message,
+            response: error.response,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+
         // Enhance error object with useful message
         const errorMessage = error.response?.data?.error || "Connection Error";
         const enhancedError = new Error(errorMessage);
