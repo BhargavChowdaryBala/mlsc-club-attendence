@@ -16,9 +16,17 @@ if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY
   process.exit(1);
 }
 
+// Sanitize the private key:
+// 1. Handle literal "\n" strings (common in .env files or copy-paste).
+// 2. Remove surrounding double-quotes if they were accidentally pasted.
+let privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+  privateKey = privateKey.slice(1, -1);
+}
+
 const serviceAccountAuth = new JWT({
   email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-  key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+  key: privateKey,
   scopes: ['https://www.googleapis.com/auth/spreadsheets'],
 });
 
