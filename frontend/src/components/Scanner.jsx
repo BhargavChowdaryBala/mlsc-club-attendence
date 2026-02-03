@@ -174,28 +174,28 @@ const Scanner = ({ onScanSuccess }) => {
 
                 {/* Start Overlay */}
                 {!isScanning && !scanResult && (
-                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-slate-900 text-slate-400 p-6 text-center">
+                    <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/80 backdrop-blur-sm text-slate-300 p-6 text-center transition-all duration-300">
                         {!scanError && (
-                            <div className="mb-4 p-3 bg-slate-800 rounded-full">
-                                <svg className="w-8 h-8 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                            <div className="mb-4 p-4 bg-white/5 rounded-full border border-white/10 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                                <svg className="w-8 h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.5" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
                             </div>
                         )}
 
                         {!scanError ? (
                             <>
-                                <h3 className="text-white text-lg font-bold mb-1">Ready to Scan</h3>
+                                <h3 className="text-white text-xl font-bold mb-1 tracking-tight">Ready to Scan</h3>
                                 <button
                                     onClick={() => startScanning()}
-                                    className="mt-4 px-6 py-2 bg-blue-600 text-white font-bold rounded-full shadow-lg hover:scale-105 transition transform flex items-center gap-2"
+                                    className="mt-6 px-8 py-3 bg-primary text-white font-bold rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] hover:shadow-[0_0_25px_rgba(59,130,246,0.8)] hover:scale-105 transition transform flex items-center gap-2"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                                    Start
+                                    Start Camera
                                 </button>
                             </>
                         ) : (
                             <div className="flex flex-col items-center">
-                                <p className="text-red-400 text-sm mb-4">{scanError.replace('Camera Error:', '')}</p>
-                                <button onClick={() => startScanning()} className="px-4 py-2 bg-slate-700 text-white text-sm font-bold rounded-full">Retry</button>
+                                <p className="text-red-400 text-sm mb-4 bg-red-950/30 px-3 py-1 rounded-lg border border-red-900/50">{scanError.replace('Camera Error:', '')}</p>
+                                <button onClick={() => startScanning()} className="px-6 py-2 bg-slate-800 text-white text-sm font-bold rounded-full border border-slate-700 hover:bg-slate-700 transition">Retry</button>
                             </div>
                         )}
                     </div>
@@ -237,22 +237,25 @@ const Scanner = ({ onScanSuccess }) => {
             <div className="w-full">
                 {scanResult && (
                     <div className="w-full animate-fade-in-up mb-4">
-                        <div className="bg-white rounded-2xl p-5 shadow-lg border border-slate-100 flex flex-col items-center text-center">
-                            <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-3">
-                                <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/10 flex flex-col items-center text-center relative overflow-hidden">
+                            {/* Glow effect */}
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+
+                            <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
+                                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
                             </div>
-                            <h3 className="text-lg font-bold text-green-700 leading-tight mb-1">{scanResult.message}</h3>
+                            <h3 className="text-lg font-bold text-green-400 leading-tight mb-1 drop-shadow-sm">{scanResult.message}</h3>
 
                             {scanResult.student && (
-                                <div className="mt-3 w-full bg-slate-50 rounded-xl p-3 border border-slate-100">
-                                    <div className="text-xl font-bold text-slate-800">{scanResult.student.name}</div>
-                                    <div className="text-sm font-mono text-slate-500">{scanResult.student.rollNo}</div>
-                                    <div className="text-xs text-slate-400 mt-1">{scanResult.student.branch}</div>
+                                <div className="mt-3 w-full bg-black/40 rounded-xl p-3 border border-white/5">
+                                    <div className="text-xl font-bold text-white tracking-wide">{scanResult.student.name}</div>
+                                    <div className="text-sm font-mono text-slate-400 mt-1">{scanResult.student.rollNo}</div>
+                                    <div className="text-xs text-indigo-300/80 mt-1 uppercase tracking-wider font-semibold">{scanResult.student.branch}</div>
                                 </div>
                             )}
 
                             {/* Timestamp */}
-                            <div className="mt-2 text-xs text-slate-300">
+                            <div className="mt-2 text-xs text-slate-500">
                                 Scanned at {scanResult.timestamp}
                             </div>
                         </div>
@@ -264,15 +267,15 @@ const Scanner = ({ onScanSuccess }) => {
             {/* Error Card - Persistent */}
             {scanError && (
                 <div className="w-full animate-fade-in-up mb-4">
-                    <div className="bg-red-50 rounded-2xl p-5 shadow-lg border border-red-100 flex flex-col items-center text-center">
-                        <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mb-3">
-                            <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    <div className="bg-red-950/40 backdrop-blur-xl rounded-2xl p-5 shadow-lg border border-red-500/20 flex flex-col items-center text-center">
+                        <div className="w-12 h-12 bg-red-900/30 rounded-full flex items-center justify-center mb-3 border border-red-500/10">
+                            <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
                         </div>
-                        <h3 className="text-lg font-bold text-red-700 leading-tight mb-2">Registration Error</h3>
-                        <p className="text-red-800 font-medium text-sm bg-red-100/50 px-3 py-2 rounded-lg break-all">
+                        <h3 className="text-lg font-bold text-red-400 leading-tight mb-2">Registration Error</h3>
+                        <p className="text-red-200 font-medium text-sm bg-red-950/60 px-3 py-2 rounded-lg break-all border border-red-500/10">
                             {scanError}
                         </p>
-                        <div className="mt-2 text-xs text-red-400">
+                        <div className="mt-2 text-xs text-red-500/70">
                             Scan another to retry
                         </div>
                     </div>

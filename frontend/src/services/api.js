@@ -28,3 +28,22 @@ export const markAttendance = async (rollNo) => {
         throw enhancedError;
     }
 };
+
+/**
+ * Fetches the full attendance list.
+ * @returns {Promise<Object>} The list of students.
+ */
+export const getAttendance = async () => {
+    try {
+        const response = await axios.get(`${API_URL}/api/attendance`);
+        return response.data;
+    } catch (error) {
+        console.error("API Error Details:", {
+            message: error.message,
+            response: error.response,
+            status: error.response?.status,
+            data: error.response?.data
+        });
+        throw new Error(error.response?.data?.error || 'Failed to fetch attendance list');
+    }
+};

@@ -145,6 +145,33 @@ app.post('/api/mark-attendance', async (req, res) => {
   }
 });
 
+// API to Get All Attendance Data
+app.get('/api/attendance', async (req, res) => {
+  console.log('[API] Fetching full attendance list...');
+  try {
+    if (!doc.sheetCount || doc.sheetCount === 0) {
+      await accessSpreadsheet();
+    }
+    const sheet = doc.sheetsByIndex[0];
+    const rows = await sheet.getRows();
+
+    // Map rows to clean JSON
+    const students = rows.map(row => ({
+      name: row.get('Name'),
+      rollNo: row.get('Rollnumber'),
+      branch: row.get('Branch'),
+      isPresent: row.get('isPresent') === 'TRUE' || row.get('isPresent') === 'Present' || row.get('isPresent') === true
+    }));
+
+    console.log(`[API] Returning ${students.length} student records.`);
+    res.json({ students });
+
+  } catch (error) {
+    console.error('[ERROR] Failed to fetch attendance:', error);
+    res.status(500).json({ error: 'Failed to fetch attendance data' });
+  }
+});
+
 app.get('/', (req, res) => {
   res.send('Attendance Backend is Running');
 });
