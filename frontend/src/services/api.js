@@ -1,7 +1,7 @@
 import axios from 'axios';
 
-// Get API URL from environment variables or default to localhost, stripping any trailing slash
-const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').replace(/\/$/, '');
+// Get API URL from environment variables or default to localhost, ensuring no trailing slash
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:3000').trim().replace(/\/+$/, '');
 
 /**
  * Marks attendance for a given roll number.
