@@ -23,7 +23,7 @@ function App() {
       <div className="flex bg-white/5 backdrop-blur-md p-1 rounded-xl border border-white/10 mb-8">
         <button
           onClick={() => setActiveTab('scan')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'scan'
+          className={`cursor-pointer px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'scan'
             ? 'bg-primary text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
             : 'text-slate-400 hover:text-white'
             }`}
@@ -32,7 +32,7 @@ function App() {
         </button>
         <button
           onClick={() => setActiveTab('manual')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'manual'
+          className={`cursor-pointer px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'manual'
             ? 'bg-primary text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
             : 'text-slate-400 hover:text-white'
             }`}
@@ -41,7 +41,7 @@ function App() {
         </button>
         <button
           onClick={() => setActiveTab('list')}
-          className={`px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'list'
+          className={`cursor-pointer px-6 py-2 rounded-lg text-sm font-bold transition-all duration-200 ${activeTab === 'list'
             ? 'bg-primary text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]'
             : 'text-slate-400 hover:text-white'
             }`}

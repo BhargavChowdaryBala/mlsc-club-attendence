@@ -186,7 +186,7 @@ const Scanner = ({ onScanSuccess }) => {
                                 <h3 className="text-white text-xl font-bold mb-1 tracking-tight">Ready to Scan</h3>
                                 <button
                                     onClick={() => startScanning()}
-                                    className="mt-6 px-8 py-3 bg-primary text-white font-bold rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] hover:shadow-[0_0_25px_rgba(59,130,246,0.8)] hover:scale-105 transition transform flex items-center gap-2"
+                                    className="cursor-pointer mt-6 px-8 py-3 bg-primary text-white font-bold rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] hover:shadow-[0_0_25px_rgba(59,130,246,0.8)] hover:scale-105 transition transform flex items-center gap-2"
                                 >
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                                     Start Camera
@@ -195,7 +195,7 @@ const Scanner = ({ onScanSuccess }) => {
                         ) : (
                             <div className="flex flex-col items-center">
                                 <p className="text-red-400 text-sm mb-4 bg-red-950/30 px-3 py-1 rounded-lg border border-red-900/50">{scanError.replace('Camera Error:', '')}</p>
-                                <button onClick={() => startScanning()} className="px-6 py-2 bg-slate-800 text-white text-sm font-bold rounded-full border border-slate-700 hover:bg-slate-700 transition">Retry</button>
+                                <button onClick={() => startScanning()} className="cursor-pointer px-6 py-2 bg-slate-800 text-white text-sm font-bold rounded-full border border-slate-700 hover:bg-slate-700 transition">Retry</button>
                             </div>
                         )}
                     </div>
