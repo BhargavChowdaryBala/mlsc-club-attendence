@@ -1,0 +1,23 @@
+import axios from 'axios';
+
+// Get API URL from environment variables or default to localhost
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';
+
+/**
+ * Marks attendance for a given roll number.
+ * @param {string} rollNo - The student's roll number.
+ * @returns {Promise<Object>} - The server response containing message and student details.
+ * @throws {Error} - Throws an error if the request fails.
+ */
+export const markAttendance = async (rollNo) => {
+    try {
+        const response = await axios.post(`${API_URL}/api/mark-attendance`, { rollNo });
+        return response.data;
+    } catch (error) {
+        // Enhance error object with useful message
+        const errorMessage = error.response?.data?.error || "Connection Error";
+        const enhancedError = new Error(errorMessage);
+        enhancedError.originalError = error;
+        throw enhancedError;
+    }
+};

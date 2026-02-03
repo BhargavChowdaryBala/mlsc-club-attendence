@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #4f46e5;
+  --color-secondary: #1e293b;
+  --color-accent: #10b981;
+  --color-danger: #ef4444;
+  --color-background: #f8fafc;
+
+  --font-sans: 'Inter', sans-serif;
+}
+
+body {
+  @apply bg-background text-secondary antialiased;
+}
+
+/* Custom Animation for Scanner overlay */
+@keyframes scan-line {
+  0% {
+    top: 0;
+  }
+
+  50% {
+    top: 100%;
+  }
+
+  100% {
+    top: 0;
+  }
+}
+
+.scan-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: #10b981;
+  box-shadow: 0 0 4px #10b981;
+  animation: scan-line 2s infinite linear;
+}
