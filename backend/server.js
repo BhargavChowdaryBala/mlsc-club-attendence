@@ -22,6 +22,11 @@ if (!process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL || !process.env.GOOGLE_PRIVATE_KEY
   process.exit(1);
 }
 
+if (!process.env.SPOT_REGISTRATION_PASSWORD) {
+  console.error('CRITICAL ERROR: Missing SPOT_REGISTRATION_PASSWORD in .env');
+  process.exit(1);
+}
+
 // Sanitize the private key:
 let privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
 if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
@@ -52,7 +57,12 @@ async function ensureDocLoaded() {
 
     console.log('[SHEET] Initializing connection...');
     await doc.loadInfo();
-    console.log(`[SHEET] Successfully loaded: "${doc.title}"`);
+
+    if (doc.sheetCount === 0) {
+      throw new Error('The spreadsheet contains no worksheets.');
+    }
+
+    console.log(`[SHEET] Successfully loaded: "${doc.title}" (${doc.sheetCount} sheets)`);
   } catch (error) {
     console.error('[SHEET ERROR]', error.message);
 

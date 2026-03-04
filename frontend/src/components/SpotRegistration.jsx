@@ -25,6 +25,13 @@ const SpotRegistration = () => {
         }
     };
 
+    const handleLock = () => {
+        setIsAuthenticated(false);
+        setPassword('');
+        setError(null);
+        setMessage(null);
+    };
+
     const handleInputChange = (e) => {
         const { name, value } = e.target;
         setFormData(prev => ({
@@ -52,8 +59,14 @@ const SpotRegistration = () => {
                 branch: ''
             });
         } catch (err) {
-            setError(err.message);
-            if (err.message.includes('password')) {
+            const errorMessage = err.message;
+            setError(errorMessage);
+
+            // Reset auth for 401 Unauthorized or specific password errors
+            const isAuthError = err.originalError?.response?.status === 401 ||
+                errorMessage.toLowerCase().includes('password');
+
+            if (isAuthError) {
                 setIsAuthenticated(false);
                 setPassword('');
             }
@@ -103,7 +116,7 @@ const SpotRegistration = () => {
                         Spot Registration
                     </h2>
                     <button
-                        onClick={() => setIsAuthenticated(false)}
+                        onClick={handleLock}
                         className="text-xs text-slate-500 hover:text-slate-300 underline"
                     >
                         Lock Portal
