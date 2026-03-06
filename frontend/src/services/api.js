@@ -67,3 +67,17 @@ export const spotRegister = async (studentData) => {
         throw new Error(error.response?.data?.error || 'Spot registration failed');
     }
 };
+
+/**
+ * Verifies the portal password.
+ * @param {string} password 
+ * @returns {Promise<Object>}
+ */
+export const verifyPassword = async (password) => {
+    try {
+        const response = await axios.post(`${API_URL}/api/verify-password`, { password });
+        return response.data;
+    } catch (error) {
+        throw new Error(error.response?.data?.error || 'Verification failed');
+    }
+};

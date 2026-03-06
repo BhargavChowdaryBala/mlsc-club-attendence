@@ -42,9 +42,14 @@ if (!process.env.SPOT_REGISTRATION_PASSWORD) {
 }
 
 // Sanitize the private key:
-let privateKey = process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n');
-if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
-  privateKey = privateKey.slice(1, -1);
+let privateKey = process.env.GOOGLE_PRIVATE_KEY;
+if (privateKey) {
+  // Replace literal '\n' characters with actual newlines
+  privateKey = privateKey.replace(/\\n/g, '\n');
+  // Remove surrounding double-quotes if they were accidentally pasted
+  if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+    privateKey = privateKey.slice(1, -1);
+  }
 }
 
 // Configure Proxy if present
@@ -242,6 +247,15 @@ app.get('/api/attendance', async (req, res) => {
     console.error('[API ERROR]', error.message);
     res.status(500).json({ error: error.message });
   }
+});
+
+// API to Verify Portal Password
+app.post('/api/verify-password', (req, res) => {
+  const { password } = req.body;
+  if (!password || password !== process.env.SPOT_REGISTRATION_PASSWORD) {
+    return res.status(401).json({ error: 'Invalid portal password' });
+  }
+  return res.status(200).json({ message: 'Password verified' });
 });
 
 app.get('/', (req, res) => {

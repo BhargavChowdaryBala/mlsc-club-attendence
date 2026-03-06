@@ -60,7 +60,10 @@ const SpotRegistration = () => {
 
         try {
             const result = await spotRegister({
-                ...formData,
+                name: formData.name,
+                rollNo: formData.rollNo,
+                branch: formData.branch,
+                yearOfStudy: formData.year,
                 password
             });
             setMessage(result.message);
