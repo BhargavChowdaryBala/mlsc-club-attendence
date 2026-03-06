@@ -1,11 +1,107 @@
-import React, { useState } from 'react';
-import { verifyPassword } from '../services/api';
+import React, { useState, useEffect } from 'react';
+import { verifyPassword, getAttendance } from '../services/api';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 const AdminLogin = ({ onBack }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState('');
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(false);
+
+  // New states for Dashboard features
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedBranch, setSelectedBranch] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState('All');
+  const [exportMessage, setExportMessage] = useState(null);
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Auto-branch logic based on Year
+  useEffect(() => {
+    if (selectedYear === '1st Year') {
+      setSelectedBranch('BSH');
+    } else if (selectedYear !== '' && selectedBranch === 'BSH') {
+      setSelectedBranch('');
+    }
+  }, [selectedYear]);
+
+  const handleExportPDF = async () => {
+    if (!selectedYear || !selectedBranch) {
+      setExportMessage('Please select both Year and Branch to export.');
+      setTimeout(() => setExportMessage(null), 3000);
+      return;
+    }
+
+    setIsExporting(true);
+    setExportMessage(null);
+    try {
+      const data = await getAttendance();
+      const students = data.students || [];
+
+      // Case-insensitive filtering
+      const filtered = students.filter(s => {
+        const sYear = (s.year || '').trim().toLowerCase();
+        const sBranch = (s.branch || '').trim().toLowerCase();
+        const fYear = selectedYear.toLowerCase();
+        const fBranch = selectedBranch.toLowerCase();
+
+        let yearBranchMatch = (sYear === fYear && sBranch === fBranch);
+
+        if (!yearBranchMatch) return false;
+
+        if (selectedStatus === 'Present') {
+          return s.isPresent === true;
+        } else if (selectedStatus === 'Absent') {
+          return s.isPresent === false;
+        }
+
+        return true; // "All" selected
+      });
+
+      if (filtered.length === 0) {
+        setExportMessage("No students registered for this filter");
+        setIsExporting(false);
+        // Auto clear yellow message after 4s
+        setTimeout(() => setExportMessage(null), 4000);
+        return;
+      }
+
+      const doc = new jsPDF();
+      doc.text(`Attendance Report - ${selectedYear} - ${selectedBranch}`, 14, 15);
+
+      const tableColumn = ["Roll No", "Name", "Branch", "Year", "Status"];
+      const tableRows = [];
+
+      filtered.forEach(student => {
+        const studentData = [
+          student.rollNo || 'N/A',
+          student.name || 'N/A',
+          student.branch || 'N/A',
+          student.year || 'N/A',
+          student.isPresent ? 'Present' : 'Absent'
+        ];
+        tableRows.push(studentData);
+      });
+
+      autoTable(doc, {
+        head: [tableColumn],
+        body: tableRows,
+        startY: 20,
+      });
+
+      const statusSuffix = selectedStatus !== 'All' ? `_${selectedStatus}` : '';
+      const fileName = `${selectedBranch}_${selectedYear}${statusSuffix}_Attendance.pdf`;
+      doc.save(fileName);
+
+      setExportMessage(`Successfully exported ${filtered.length} students`);
+      setTimeout(() => setExportMessage(null), 3000);
+    } catch (err) {
+      setExportMessage("Error exporting data: " + err.message);
+      setTimeout(() => setExportMessage(null), 3000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -54,10 +150,111 @@ const AdminLogin = ({ onBack }) => {
             HOD Dashboard
           </h1>
 
-          <div className="bg-white/5 border border-white/10 p-8 rounded-2xl w-full shadow-2xl backdrop-blur-md relative overflow-hidden text-center min-h-[400px] flex flex-col items-center justify-center">
+          <div className="bg-white/5 border border-white/10 p-8 rounded-2xl w-full shadow-2xl backdrop-blur-md relative overflow-hidden flex flex-col items-center justify-start min-h-[400px]">
             <div className="absolute top-0 inset-x-0 h-px bg-gradient-to-r from-transparent via-cyan-500 to-transparent opacity-50"></div>
-            <h2 className="text-2xl font-bold text-white mb-4">Welcome, HOD!</h2>
-            <p className="text-slate-400">The dashboard features will be implemented here.</p>
+            <h2 className="text-2xl font-bold text-white mb-2 mt-2">Welcome, HOD!</h2>
+            <p className="text-slate-400 mb-8">Export attendance lists from the Google Sheet.</p>
+
+            <div className="w-full max-w-md space-y-6">
+              {/* Filters */}
+              <div className="flex flex-col gap-4">
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Year</label>
+                  <div className="relative">
+                    <select
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all appearance-none cursor-pointer pr-10"
+                    >
+                      <option value="" disabled>Choose Year</option>
+                      <option value="1st Year">1st Year</option>
+                      <option value="2nd Year">2nd Year</option>
+                      <option value="3rd Year">3rd Year</option>
+                      <option value="4th Year">4th Year</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Branch</label>
+                  <div className="relative">
+                    <select
+                      value={selectedBranch}
+                      onChange={(e) => setSelectedBranch(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all appearance-none cursor-pointer pr-10"
+                    >
+                      <option value="" disabled>Choose Branch</option>
+                      {selectedYear === '1st Year' ? (
+                        <option value="BSH">BSH</option>
+                      ) : (
+                        <>
+                          <option value="CSE">CSE</option>
+                          <option value="CST">CST</option>
+                          <option value="AI">AI</option>
+                          <option value="AIML">AIML</option>
+                          <option value="ECE">ECE</option>
+                          <option value="ECT">ECT</option>
+                          <option value="CIVIL">CIVIL</option>
+                          <option value="MECH">MECH</option>
+                        </>
+                      )}
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2 text-left">
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-1">Select Status</label>
+                  <div className="relative">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      className="w-full bg-slate-950 border border-white/10 rounded-xl px-4 py-3 text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 outline-none transition-all appearance-none cursor-pointer pr-10"
+                    >
+                      <option value="All">All Students</option>
+                      <option value="Present">Present Only</option>
+                      <option value="Absent">Absent Only</option>
+                    </select>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Export Message */}
+              {exportMessage && (
+                <div className={`p-4 mt-4 rounded-xl text-sm font-medium border ${exportMessage.includes("No students") ? "bg-yellow-500/10 border-yellow-500/20 text-yellow-400" : exportMessage.includes("Error") ? "bg-red-500/10 border-red-500/20 text-red-400" : "bg-green-500/10 border-green-500/20 text-green-400"} transition-all`}>
+                  {exportMessage}
+                </div>
+              )}
+
+              {/* Export Button */}
+              <button
+                onClick={handleExportPDF}
+                disabled={isExporting}
+                className={`w-full py-4 mt-2 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-black rounded-xl shadow-lg shadow-emerald-500/20 transition-all active:scale-[0.98] flex items-center justify-center gap-2 ${isExporting ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {isExporting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-5 h-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    Export PDF
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       </div>
