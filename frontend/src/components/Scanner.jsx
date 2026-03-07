@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { markAttendance } from '../services/api';
 import scannerService from '../services/scannerService';
+import { playSuccessBeep, playDuplicateBeep, playErrorBeep } from '../services/beepService';
 
 const Scanner = ({ onScanSuccess, onScan, autoStart = false, id = "reader-custom" }) => {
     const [scanResult, setScanResult] = useState(null);
@@ -8,6 +9,7 @@ const Scanner = ({ onScanSuccess, onScan, autoStart = false, id = "reader-custom
     const [isScanning, setIsScanning] = useState(false);
     const [cameras, setCameras] = useState([]);
     const [activeCameraId, setActiveCameraId] = useState(null);
+    const [scanHistory, setScanHistory] = useState([]);
 
     // State for duplicate prevention
     const lastScannedCode = useRef(null);
@@ -145,19 +147,61 @@ const Scanner = ({ onScanSuccess, onScan, autoStart = false, id = "reader-custom
 
             if (navigator.vibrate) try { navigator.vibrate([100, 50, 100]); } catch (e) { }
 
-            setScanResult({
+            // Play appropriate beep based on HTTP status or response message
+            const isAlreadyPresent = data.message?.toLowerCase().includes('already');
+            if (isAlreadyPresent) {
+                playDuplicateBeep();
+            } else {
+                playSuccessBeep();
+            }
+
+            const historyEntry = {
+                id: Date.now(),
                 message: data.message,
                 student: data.student,
-                timestamp: new Date().toLocaleTimeString()
-            });
+                timestamp: new Date().toLocaleTimeString(),
+                isAlreadyPresent
+            };
+
+            setScanResult(historyEntry);
             setScanError(null);
+
+            // Add to history (keep last 10)
+            setScanHistory(prev => {
+                const updated = [historyEntry, ...prev];
+                return updated.slice(0, 10);
+            });
 
             onScanSuccess && onScanSuccess(data);
 
         } catch (err) {
-            setScanError(err.message);
-            setScanResult(null);
-            if (navigator.vibrate) try { navigator.vibrate(400); } catch (e) { }
+            // Use HTTP status code (404) for robust detection instead of fragile string matching
+            const isNotRegistered = err.statusCode === 404;
+            if (isNotRegistered) {
+                const notRegEntry = {
+                    id: Date.now(),
+                    message: 'Student Not Registered',
+                    student: null,
+                    rollNo: rollNo,
+                    timestamp: new Date().toLocaleTimeString(),
+                    isNotRegistered: true
+                };
+                setScanResult(notRegEntry);
+                setScanError(null);
+                playErrorBeep();
+
+                // Add "not registered" entry to history for consistency
+                setScanHistory(prev => {
+                    const updated = [notRegEntry, ...prev];
+                    return updated.slice(0, 10);
+                });
+
+                if (navigator.vibrate) try { navigator.vibrate(400); } catch (e) { }
+            } else {
+                setScanError(err.message);
+                setScanResult(null);
+                if (navigator.vibrate) try { navigator.vibrate(400); } catch (e) { }
+            }
         }
     };
 
@@ -245,20 +289,38 @@ const Scanner = ({ onScanSuccess, onScan, autoStart = false, id = "reader-custom
             <div className="w-full">
                 {scanResult && (
                     <div className="w-full animate-fade-in-up mb-4">
-                        <div className="bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/10 flex flex-col items-center text-center relative overflow-hidden">
+                        <div className={`bg-slate-900/80 backdrop-blur-xl rounded-2xl p-5 shadow-2xl border border-white/10 flex flex-col items-center text-center relative overflow-hidden`}>
                             {/* Glow effect */}
-                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 to-emerald-500"></div>
+                            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${scanResult.isNotRegistered
+                                ? 'from-red-500 to-rose-500'
+                                : 'from-green-500 to-emerald-500'
+                                }`}></div>
 
-                            <div className="w-12 h-12 bg-green-500/20 rounded-full flex items-center justify-center mb-3 shadow-[0_0_15px_rgba(34,197,94,0.3)]">
-                                <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center mb-3 ${scanResult.isNotRegistered
+                                ? 'bg-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.3)]'
+                                : 'bg-green-500/20 shadow-[0_0_15px_rgba(34,197,94,0.3)]'
+                                }`}>
+                                {scanResult.isNotRegistered ? (
+                                    <svg className="w-6 h-6 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                ) : (
+                                    <svg className="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7"></path></svg>
+                                )}
                             </div>
-                            <h3 className="text-lg font-bold text-green-400 leading-tight mb-1 drop-shadow-sm">{scanResult.message}</h3>
+                            <h3 className={`text-lg font-bold leading-tight mb-1 drop-shadow-sm ${scanResult.isNotRegistered ? 'text-red-400' : 'text-green-400'
+                                }`}>{scanResult.message}</h3>
 
                             {scanResult.student && (
                                 <div className="mt-3 w-full bg-black/40 rounded-xl p-3 border border-white/5">
                                     <div className="text-xl font-bold text-white tracking-wide">{scanResult.student.name}</div>
                                     <div className="text-sm font-mono text-slate-400 mt-1">{scanResult.student.rollNo}</div>
                                     <div className="text-xs text-indigo-300/80 mt-1 uppercase tracking-wider font-semibold">{scanResult.student.branch}</div>
+                                </div>
+                            )}
+
+                            {scanResult.isNotRegistered && (
+                                <div className="mt-3 w-full bg-red-950/40 rounded-xl p-3 border border-red-500/10">
+                                    <div className="text-sm font-mono text-red-300">{scanResult.rollNo}</div>
+                                    <div className="text-xs text-red-400/60 mt-1">This ID is not in the registered list</div>
                                 </div>
                             )}
 
@@ -286,6 +348,64 @@ const Scanner = ({ onScanSuccess, onScan, autoStart = false, id = "reader-custom
                         <div className="mt-2 text-xs text-red-500/70">
                             Scan another to retry
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Recent Scans Feed */}
+            {scanHistory.length > 0 && !onScan && (
+                <div className="w-full mt-2">
+                    <div className="flex items-center justify-between mb-3 px-1">
+                        <h4 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            Recent Scans
+                        </h4>
+                        <span className="text-[10px] font-bold text-slate-600 bg-white/5 px-2 py-0.5 rounded-full border border-white/5">
+                            {scanHistory.length} scan{scanHistory.length !== 1 ? 's' : ''}
+                        </span>
+                    </div>
+                    <div className="max-h-64 overflow-y-auto rounded-xl bg-slate-900/40 backdrop-blur-md border border-white/5 divide-y divide-white/5 scrollbar-thin">
+                        {scanHistory.map((entry) => (
+                            <div
+                                key={entry.id}
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-white/5 transition-colors"
+                            >
+                                {/* Status Dot */}
+                                <div className={`w-2 h-2 rounded-full flex-shrink-0 shadow-sm ${entry.isNotRegistered
+                                        ? 'bg-red-400 shadow-red-400/30'
+                                        : entry.isAlreadyPresent
+                                            ? 'bg-yellow-400 shadow-yellow-400/30'
+                                            : 'bg-green-400 shadow-green-400/30'
+                                    }`}></div>
+
+                                {/* Student Info */}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-semibold text-white truncate">
+                                            {entry.student?.name || entry.rollNo || 'Unknown'}
+                                        </span>
+                                        {entry.isAlreadyPresent && (
+                                            <span className="text-[9px] font-bold text-yellow-500 bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20 uppercase tracking-wider flex-shrink-0">
+                                                Dup
+                                            </span>
+                                        )}
+                                        {entry.isNotRegistered && (
+                                            <span className="text-[9px] font-bold text-red-500 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20 uppercase tracking-wider flex-shrink-0">
+                                                N/R
+                                            </span>
+                                        )}
+                                    </div>
+                                    <span className="text-xs text-slate-500 font-mono">
+                                        {entry.student?.rollNo || entry.rollNo || ''}
+                                    </span>
+                                </div>
+
+                                {/* Timestamp */}
+                                <span className="text-[10px] text-slate-600 font-medium flex-shrink-0">
+                                    {entry.timestamp}
+                                </span>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
